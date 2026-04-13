@@ -9,6 +9,7 @@ export interface FormData {
     day: string
     month: string
     year: string
+    appealReason: string
     message: string
     password: string
     passwordSecond: string
@@ -36,6 +37,7 @@ const initialState: StepFormState = {
         day: "",
         month: "",
         year: "",
+        appealReason: "",
         message: "",
         password: "",
         passwordSecond: "",

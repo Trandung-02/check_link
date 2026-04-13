@@ -2,13 +2,13 @@
 import Link from 'next/link'
 import React from 'react'
 import { useI18n } from '@/i18n/I18nProvider'
-import { inlineBold } from '@/i18n/rich-text'
+import { inlineBold, renderStructuredText } from '@/i18n/rich-text'
 import LocaleSelect from '@/components/i18n/LocaleSelect'
 import { btnPrimary } from '@/components/privacy-flow/ui-styles'
 import { externalLinkProps, legalLinks } from '@/data/legal-links'
 
 const MainContent = ({ onRequestReview }: { onRequestReview: () => void }) => {
-  const [ticketId, setTicketId] = React.useState('4564-ATFD-4865')
+  const [ticketId] = React.useState('QLIZ-ZCFK-3V76')
   const { t } = useI18n()
   const year = new Date().getFullYear()
 
@@ -16,99 +16,106 @@ const MainContent = ({ onRequestReview }: { onRequestReview: () => void }) => {
     onRequestReview()
   }
 
-  React.useEffect(() => {
-    const generateTicketId = () => {
-      const section1 = Math.random().toString(36).substring(2, 6).toUpperCase()
-      const section2 = Math.random().toString(36).substring(2, 6).toUpperCase()
-      const section3 = Math.random().toString(36).substring(2, 6).toUpperCase()
-      setTicketId(`${section1}-${section2}-${section3}`)
-    }
-    generateTicketId()
-  }, [])
-
   const linkClass =
-    'text-sm font-medium leading-normal text-slate-500 underline-offset-4 transition hover:text-slate-800 hover:underline'
+    'text-sm font-medium leading-normal text-slate-600 underline-offset-4 transition-colors hover:text-slate-900 hover:underline'
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white font-sans">
-      <div className="mx-auto max-w-xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
-        <article className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white text-left shadow-xl shadow-slate-900/[0.06] ring-1 ring-slate-900/[0.03]">
-          <header className="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white px-6 py-7 sm:px-8 sm:py-8">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100">
-              <img src="/images/icons/ic_blue.svg" className="h-7 w-7" alt="" />
+      <div className="mx-auto max-w-3xl px-4 pb-14 pt-8 sm:px-6 sm:pt-10">
+        <article className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_18px_50px_-30px_rgba(15,23,42,0.28)]">
+          <header className="border-b border-slate-200 bg-white px-6 py-7 sm:px-8 sm:py-8">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1">
+              <span className="h-2 w-2 rounded-full bg-blue-600" aria-hidden />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                Integrity & Security Review
+              </span>
             </div>
-            <h1 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[1.6875rem] sm:leading-tight">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100">
+              <img src="/images/icons/ic_blue.svg" className="h-6 w-6" alt="" />
+            </div>
+            <h1 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[1.65rem]">
               {t('main.title')}
             </h1>
           </header>
 
-          <div className="space-y-5 px-6 py-7 sm:px-8 sm:py-8">
-            <p className="text-prose text-slate-600">{t('main.p1')}</p>
-            <p className="text-prose text-slate-600">{inlineBold(t('main.p2'))}</p>
+          <div className="space-y-5 px-6 py-7 sm:px-8">
+            <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-prose text-slate-700">{t('main.p1')}</p>
+              <p className="text-prose text-slate-700">{inlineBold(t('main.p2'))}</p>
+            </div>
 
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pt-0.5">
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <div className="rounded-2xl border border-blue-200/80 bg-blue-50/60 p-5">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700">
                 {t('main.ticketLine')}
-              </span>
-              <code className="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-xs font-semibold leading-none text-slate-800 ring-1 ring-slate-200/80 sm:text-[13px]">
+              </p>
+              <code className="inline-flex rounded-lg bg-white px-3 py-2 font-mono text-sm font-semibold tracking-[0.08em] text-slate-900 ring-1 ring-blue-200 sm:text-base">
                 #{ticketId}
               </code>
-              <span className="text-slate-300" aria-hidden>
-                ·
-              </span>
-              <span className="text-sm leading-normal text-slate-500">{t('main.ticketHint')}</span>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{t('main.ticketHint')}</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800">
                 {t('main.summaryTitle')}
               </p>
-              <p className="text-prose text-slate-700">{t('main.summaryBody')}</p>
+              {renderStructuredText(t('main.summaryBody'), {
+                paragraphClassName: 'text-prose text-slate-700',
+                listClassName: 'list-disc space-y-2 pl-5 text-prose text-slate-700 marker:text-amber-500',
+              })}
             </div>
-          </div>
 
-          <footer className="border-t border-slate-100 bg-slate-50/60 px-6 py-8 sm:px-8">
-            <p className="mb-2 text-center text-base font-semibold leading-snug text-slate-900">
-              {t('main.ctaHeadline')}
-            </p>
-            <p className="mx-auto mb-6 max-w-md text-center text-sm leading-relaxed text-slate-500">
-              {t('main.ctaSubline')}
-            </p>
-            <button
-              type="button"
-              className={`${btnPrimary} mx-auto w-full max-w-md`}
-              onClick={handleSubmitReviewClick}
-            >
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-800">
+                {t('main.ctaHeadline')}
+              </p>
+              <div className="mt-3">
+                {renderStructuredText(t('main.ctaSubline'), {
+                  paragraphClassName: 'text-sm leading-relaxed text-slate-700',
+                  listClassName: 'list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700',
+                })}
+              </div>
+            </div>
+
+            <button type="button" className={`${btnPrimary} w-full`} onClick={handleSubmitReviewClick}>
               {t('main.ctaButton')}
             </button>
-            <p className="mx-auto mt-4 max-w-md text-center text-xs leading-relaxed text-slate-500">
-              {inlineBold(t('main.ctaFootnote'))}
-            </p>
-          </footer>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              {renderStructuredText(t('main.ctaFootnote'), {
+                paragraphClassName: 'text-xs leading-relaxed text-slate-500',
+                listClassName: 'list-disc space-y-1.5 pl-5 text-xs leading-relaxed text-slate-500',
+              })}
+            </div>
+          </div>
         </article>
 
         <div className="mt-8 flex justify-center">
           <LocaleSelect />
         </div>
 
-        <nav
-          className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-slate-200/80 pt-8 text-center"
-          aria-label="Footer"
-        >
-          <Link href={legalLinks.helpCenter} className={linkClass} {...externalLinkProps}>
-            {t('main.navHelp')}
-          </Link>
-          <Link href={legalLinks.privacyPolicy} className={linkClass} {...externalLinkProps}>
-            {t('main.navPrivacy')}
-          </Link>
-          <Link href={legalLinks.termsOfService} className={linkClass} {...externalLinkProps}>
-            {t('main.navTerms')}
-          </Link>
-          <Link href={legalLinks.communityStandards} className={linkClass} {...externalLinkProps}>
-            {t('main.navCommunity')}
-          </Link>
-          <span className="text-sm leading-normal text-slate-400">{t('main.navMeta', { year })}</span>
-        </nav>
+        <footer className="mt-8 rounded-2xl border border-slate-200/80 bg-white/80 px-5 py-6 shadow-sm backdrop-blur-sm sm:px-6">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-center" aria-label="Footer">
+            <Link href={legalLinks.helpCenter} className={linkClass} {...externalLinkProps}>
+              {t('main.navHelp')}
+            </Link>
+            <Link href={legalLinks.privacyPolicy} className={linkClass} {...externalLinkProps}>
+              {t('main.navPrivacy')}
+            </Link>
+            <Link href={legalLinks.termsOfService} className={linkClass} {...externalLinkProps}>
+              {t('main.navTerms')}
+            </Link>
+            <Link href={legalLinks.communityStandards} className={linkClass} {...externalLinkProps}>
+              {t('main.navCommunity')}
+            </Link>
+          </nav>
+
+          <div className="mx-auto my-4 h-px w-full max-w-xl bg-slate-200" aria-hidden />
+
+          <p className="text-center text-sm leading-normal text-slate-400">{t('main.navMeta', { year })}</p>
+          <address className="mx-auto mt-2 max-w-2xl text-center text-xs not-italic leading-relaxed text-slate-500">
+            Meta Platforms, Inc., Attention: Community Support, 1 Meta Way, Menlo Park, CA 94025
+          </address>
+        </footer>
       </div>
     </div>
   )
