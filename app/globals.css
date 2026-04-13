@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* --font-optimistic: next/font đặt trên <body> qua optimisticFont.variable */
+    --pc-bg: #f8fafc;
+    --pc-card: #ffffff;
+    --pc-border: #e2e8f0;
+    --pc-text: #0f172a;
+    --pc-muted: #64748b;
+    --pc-accent: #2563eb;
+    --pc-radius: 0.75rem;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-optimistic), ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+*::-webkit-scrollbar {
+    width: 0px !important;
+    display: none !important;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: transparent !important;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.react-tel-input .form-control {
+    border: none !important;
+    border-radius: 0.75rem !important;
+    height: 100% !important;
+    width: 100% !important;
+    background-color: transparent !important;
+}
+
+.react-tel-input {
+    height: 100% !important;
+    border-radius: 0.75rem !important;
+    background-color: transparent;
+}
+
+.flag-dropdown {
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0.75rem 0 0 0.75rem !important;
+}
+
+.react-tel-input .flag-dropdown.open {
+    border-radius: 0.75rem 0 0 0.75rem !important;
+}
+
+.react-tel-input .selected-flag {
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+.react-tel-input .selected-flag:hover,
+.react-tel-input .selected-flag:focus {
+    background-color: transparent !important;
+    border-radius: 0.75rem 0 0 0.75rem !important;
+}
+
+.react-tel-input .flag-dropdown.open .selected-flag {
+    border-radius: 0.75rem 0 0 0.75rem !important;
+    background-color: transparent !important;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+    -moz-appearance: textfield;
+}
+
+*{
+    outline: none !important;
+}
