@@ -191,6 +191,12 @@ input[type='number'] {
     -moz-appearance: textfield;
 }
 
-*{
-    outline: none !important;
+/* Bỏ viền focus khi dùng chuột; giữ viền rõ ràng khi điều hướng bằng bàn phím (WCAG). */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--pc-accent);
+    outline-offset: 2px;
 }

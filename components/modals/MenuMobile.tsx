@@ -30,6 +30,7 @@ const MenuMobile: React.FC<MenuMobileProps> = ({ open, onOpenChange }) => {
             isOpen={isOpen}
             title=""
             onClose={handleClose}
+            contentId="privacy-mobile-nav-panel"
         >
 
             <div className='w-full'>
@@ -59,7 +60,7 @@ const MenuMobile: React.FC<MenuMobileProps> = ({ open, onOpenChange }) => {
                             <div className='w-[24px] h-[24px] min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]'>
                                 <img src="/images/icons/ic_setting.svg" className='w-full h-full' alt="other" />
                             </div>
-                            <span className='text-black font-[500] text-[15px]'>Commom privacy settings</span>
+                            <span className='text-black font-[500] text-[15px]'>Common privacy settings</span>
                         </div>
                     </div>
 
@@ -68,7 +69,7 @@ const MenuMobile: React.FC<MenuMobileProps> = ({ open, onOpenChange }) => {
                             <div className='w-[24px] h-[24px] min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]'>
                                 <img src="/images/icons/ic_topics.svg" className='w-full h-full' alt="other" />
                             </div>
-                            <span className='text-black font-[500] text-[15px]'>Pivacy topics</span>
+                            <span className='text-black font-[500] text-[15px]'>Privacy topics</span>
                         </div>
                     </div>
 

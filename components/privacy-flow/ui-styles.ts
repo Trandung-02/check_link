@@ -13,7 +13,7 @@ export const textOverline = 'text-[11px] font-semibold uppercase tracking-[0.14e
 export const formLabel = 'mb-1.5 block text-sm font-medium leading-snug text-slate-800'
 
 export const btnPrimary =
-  'inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3.5 text-[15px] font-semibold leading-none text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700 hover:shadow-md active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50'
+  'inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3.5 text-[15px] font-semibold leading-none text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700 hover:shadow-md active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:pointer-events-none disabled:opacity-50'
 
 export const btnPrimarySubtle =
   'inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium leading-snug text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50'

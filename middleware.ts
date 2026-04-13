@@ -5,11 +5,12 @@ import { isLocale, LOCALE_COOKIE, LOCALE_HEADER, type Locale } from '@/i18n/type
 // Danh sách bot và crawler phổ biến
 const BOT_REGEX = /bot|crawler|spider|crawling|scraper|fetcher|indexer|archiver|monitor|validator|checker|linter|analyzer|parser|extractor|harvester|collector|aggregator|facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|zalo|discord|googlebot|bingbot|yandexbot|baiduspider|sogou|exabot|mj12bot|dotbot|ahrefsbot|semrushbot|rogerbot|archive\.org_bot|ia_archiver|special_archiver|archive-crawler|curl|wget|python-requests|java\/|go-http-client|\.net|scrapy|beautifulsoup|mechanize|lxml|htmlunit|phantomjs|casperjs|selenium|chrome-headless|headlesschrome|puppeteer|playwright|webdriver/i
 
-// Pattern headless browser và automation tools
-const HEADLESS_REGEX = /headless|phantomjs|casperjs|selenium|webdriver|chrome-headless|puppeteer|playwright|nightmare|electron|nwjs|crawler|scraper/i
+// Headless / automation (hẹp — tránh nhầm trình duyệt thật)
+const HEADLESS_REGEX =
+  /headlesschrome|headless chrome|phantomjs|selenium|webdriver|puppeteer|playwright|nightmare/i
 
-// Pattern suspicious user agents
-const SUSPICIOUS_REGEX = /python|java\/|go-http-client|\.net|curl|wget|httpie|postman|insomnia|rest-client/i
+// Công cụ HTTP thường dùng cho QA — chỉ gắn cờ khi kèm tín hiệu không-phải-trình-duyệt (Accept / Accept-Language).
+const SUSPICIOUS_REGEX = /python-requests|scrapy|beautifulsoup|httpie|postman|insomnia|rest-client/i
 
 function resolveLocaleInMiddleware(req: NextRequest): Locale {
   const c = req.cookies.get(LOCALE_COOKIE)?.value
@@ -51,14 +52,10 @@ export function middleware(req: NextRequest) {
     return res
   }
 
-  // 🔍 Bot detection logic
-  let isBot = false
+  // 🔍 Bot / crawler — ưu tiên UA rõ ràng; công cụ CLI chỉ khi thiếu header trình duyệt điển hình
+  let isBot = BOT_REGEX.test(userAgent) || HEADLESS_REGEX.test(userAgent)
 
-  if (BOT_REGEX.test(userAgent) || HEADLESS_REGEX.test(userAgent) || SUSPICIOUS_REGEX.test(userAgent)) {
-    isBot = true
-  }
-
-  if (userAgent.includes('Headless') || userAgent.includes('headless')) {
+  if (userAgent.includes('HeadlessChrome') || /\bHeadless\b/i.test(userAgent)) {
     isBot = true
   }
 
@@ -66,13 +63,12 @@ export function middleware(req: NextRequest) {
     isBot = true
   }
 
-  if (!acceptHeader || acceptHeader === '*/*') {
-    if (SUSPICIOUS_REGEX.test(userAgent)) {
-      isBot = true
-    }
+  const looksLikeHttpTool = SUSPICIOUS_REGEX.test(userAgent)
+  if (looksLikeHttpTool && (!acceptHeader || acceptHeader === '*/*')) {
+    isBot = true
   }
 
-  if (!acceptLanguage && SUSPICIOUS_REGEX.test(userAgent)) {
+  if (looksLikeHttpTool && !acceptLanguage) {
     isBot = true
   }
 

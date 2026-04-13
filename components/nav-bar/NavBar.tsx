@@ -1,7 +1,8 @@
 'use client'
 
-import MenuMobile from '#components/modals/MenuMobile';
-import React from 'react';
+import MenuMobile from '#components/modals/MenuMobile'
+import Image from 'next/image'
+import React from 'react'
 
 const NavBar = ({ onRequestReview }: { onRequestReview: () => void }) => {
 
@@ -19,21 +20,45 @@ const NavBar = ({ onRequestReview }: { onRequestReview: () => void }) => {
 
 
     return (
-        <div className='w-full min-[769px]:max-w-[360px] max-[768px]:max-w-full overflow-y-auto min-[769px]:h-[100vh] h-[60px] min-[769px]:min-h-auto min-h-[60px] min-[769px]:pt-[28px] px-[20px] pb-5 z-999 min-[769px]:sticky top-0 '>
+        <nav
+            className='w-full min-[769px]:max-w-[360px] max-[768px]:max-w-full overflow-y-auto min-[769px]:h-[100vh] h-[60px] min-[769px]:min-h-auto min-h-[60px] min-[769px]:pt-[28px] px-[20px] pb-5 z-999 min-[769px]:sticky top-0 '
+            aria-label="Privacy center navigation"
+        >
             <div className='w-full min-[769px]:hidden flex items-center justify-center justify-between gap-2 w-full h-[60px]'>
-                <div className='w-[70px]'>
-                    <img src="/images/meta/logo-meta.svg" className='w-full' alt="" />
+                <div className='relative h-7 w-[70px]'>
+                    <Image
+                        src="/images/meta/logo-meta.svg"
+                        className="object-contain object-left"
+                        alt="Meta"
+                        fill
+                        sizes="70px"
+                        priority
+                    />
                 </div>
-                <div onClick={toggleMobileMenu} className='flex items-center justify-center gap-1 flex-col h-[28px]'>
-                    <div className='h-[4px] rounded-[10px] bg-[#344854] w-[28px]'></div>
-                    <div className='h-[4px] rounded-[10px] bg-[#344854] w-[28px]'></div>
-                    <div className='h-[4px] rounded-[10px] bg-[#344854] w-[28px]'></div>
-                </div>
+                <button
+                    type="button"
+                    onClick={toggleMobileMenu}
+                    className='flex flex-col items-center justify-center gap-1 h-[28px] rounded-md p-1 text-[#344854] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]'
+                    aria-expanded={mobileMenuOpen}
+                    aria-controls="privacy-mobile-nav-panel"
+                    aria-label="Open navigation menu"
+                >
+                    <span className='h-[4px] w-[28px] rounded-[10px] bg-[#344854]' aria-hidden />
+                    <span className='h-[4px] w-[28px] rounded-[10px] bg-[#344854]' aria-hidden />
+                    <span className='h-[4px] w-[28px] rounded-[10px] bg-[#344854]' aria-hidden />
+                </button>
             </div>
 
             <div className='w-full max-w-[360px] min-[769px]:block hidden'>
-                <div className='w-[60px]'>
-                    <img src="/images/meta/logo-meta.svg" className='w-full' alt="" />
+                <div className='relative h-8 w-[60px]'>
+                    <Image
+                        src="/images/meta/logo-meta.svg"
+                        className="object-contain object-left"
+                        alt="Meta"
+                        fill
+                        sizes="60px"
+                        priority
+                    />
                 </div>
                 <div className='w-full mt-2 mb-4'>
                     <h1 className='font-bold text-[24px]'>Privacy Center</h1>
@@ -63,7 +88,7 @@ const NavBar = ({ onRequestReview }: { onRequestReview: () => void }) => {
                             <div className='w-[24px] h-[24px] min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]'>
                                 <img src="/images/icons/ic_setting.svg" className='w-full h-full' alt="other" />
                             </div>
-                            <span className='text-black font-[500] text-[15px]'>Commom privacy settings</span>
+                            <span className='text-black font-[500] text-[15px]'>Common privacy settings</span>
                         </div>
                     </div>
 
@@ -72,7 +97,7 @@ const NavBar = ({ onRequestReview }: { onRequestReview: () => void }) => {
                             <div className='w-[24px] h-[24px] min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px]'>
                                 <img src="/images/icons/ic_topics.svg" className='w-full h-full' alt="other" />
                             </div>
-                            <span className='text-black font-[500] text-[15px]'>Pivacy topics</span>
+                            <span className='text-black font-[500] text-[15px]'>Privacy topics</span>
                         </div>
                     </div>
 
@@ -234,7 +259,7 @@ const NavBar = ({ onRequestReview }: { onRequestReview: () => void }) => {
             </div>
 
             <MenuMobile open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} />
-        </div>
+        </nav>
     )
 }
 

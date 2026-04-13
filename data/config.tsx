@@ -1,19 +1,27 @@
-import { Button } from '@chakra-ui/react'
 import { Link } from '@saas-ui/react'
 import { Metadata } from 'next'
-import { FaGithub, FaTwitter } from 'react-icons/fa'
 import { FiCheck } from 'react-icons/fi'
 import { Logo } from './logo'
 
 const siteConfig = {
   logo: Logo,
   seo: {
-    title: 'Saas UI',
-    description: 'The React component library for startups',} as Metadata,
-  termsUrl: '#',
-  privacyUrl: '#',
+    title: 'Account & community resources',
+    description:
+      'Security review workflows, privacy center navigation, and community standards information.',
+  } as Metadata,
+  termsUrl: 'https://www.facebook.com/policies',
+  privacyUrl: 'https://www.facebook.com/privacy/policy',
   header: {
     links: [
+      {
+        label: 'Privacy center',
+        href: '/privacy-center',
+      },
+      {
+        id: 'benefits',
+        label: 'Overview',
+      },
       {
         id: 'features',
         label: 'Features',
@@ -27,63 +35,55 @@ const siteConfig = {
         label: 'FAQ',
       },
       {
-        label: 'Login',
-        href: '#',
-      },
-      {
-        label: 'Sign Up',
-        href: '#',
-        variant: 'primary',
+        label: 'Help Center',
+        href: 'https://www.facebook.com/help',
       },
     ],
   },
   footer: {
     copyright: (
       <>
-        Built by{' '}
-        <Link href="https://twitter.com/Pagebakers">Eelco Wiersma</Link>
+        © {new Date().getFullYear()}{' '}
+        <Link href="/privacy-center">Account &amp; privacy resources</Link>
       </>
     ),
     links: [
       {
-        href: 'mailto:hello@saas-ui.dev',
-        label: 'Contact',
+        href: '/privacy-center',
+        label: 'Privacy center',
       },
       {
-        href: 'https://twitter.com/saas_js',
-        label: <FaTwitter size="14" />,
+        href: 'https://www.facebook.com/privacy/policy',
+        label: 'Privacy Policy',
       },
       {
-        href: 'https://github.com/saas-js/saas-ui',
-        label: <FaGithub size="14" />,
+        href: 'https://www.facebook.com/policies',
+        label: 'Terms',
       },
     ],
   },
   signup: {
-    title: 'Start building with Saas UI',
+    title: 'Account security & review',
     features: [
       {
         icon: FiCheck,
-        title: 'Accessible',
-        description: 'All components strictly follow WAI-ARIA standards.',
+        title: 'Guided review',
+        description: 'Step-by-step flow to submit information for account-related reviews.',
       },
       {
         icon: FiCheck,
-        title: 'Themable',
-        description:
-          'Fully customize all components to your brand with theme support and style props.',
+        title: 'Privacy center',
+        description: 'Quick access to privacy topics and official policy resources.',
       },
       {
         icon: FiCheck,
-        title: 'Composable',
-        description:
-          'Compose components to fit your needs and mix them together to create new ones.',
+        title: 'Community standards',
+        description: 'Links to official community standards and help content.',
       },
       {
         icon: FiCheck,
-        title: 'Productive',
-        description:
-          'Designed to reduce boilerplate and fully typed, build your product at speed.',
+        title: 'Multi-language',
+        description: 'Interface available in multiple languages where supported.',
       },
     ],
   },

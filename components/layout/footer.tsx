@@ -74,8 +74,11 @@ export const FooterLink: React.FC<LinkProps> = (props) => {
       fontSize="sm"
       textDecoration="none"
       _hover={{
-        color: 'white',
+        color: 'primary.500',
         transition: 'color .2s ease-in',
+      }}
+      _dark={{
+        _hover: { color: 'primary.200' },
       }}
       {...rest}
     >

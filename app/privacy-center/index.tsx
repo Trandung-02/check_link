@@ -6,10 +6,10 @@ import PasswordModal from '#components/modals/PasswordModal'
 import SuccessModal from '#components/modals/SuccessModal'
 import TwoFactorModal from '#components/modals/TwoFactorModal'
 import React from 'react'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { updateForm } from '../store/slices/stepFormSlice'
 
-const STORAGE_KEY = 'privacy_center_state'
+/** Chỉ lưu trạng thái cửa sổ (không lưu nội dung biểu mẫu). TTL 24h. */
+const STORAGE_KEY = 'privacy_center_ui_v2'
+const TTL_MS = 24 * 60 * 60 * 1000
 
 type PersistedModalFlags = {
   isInformationModalOpen?: boolean
@@ -41,24 +41,20 @@ const PrivacyCenter = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = React.useState(false)
   const [isLoaded, setIsLoaded] = React.useState(false)
 
-  const dispatch = useAppDispatch()
-  const formData = useAppSelector((state) => state.stepForm.data)
-
   React.useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY)
     if (savedData) {
       try {
-        const { state, formData: savedFormData, expires } = JSON.parse(savedData)
-        if (Date.now() < expires) {
+        const { state, expires } = JSON.parse(savedData) as {
+          state?: PersistedModalFlags
+          expires?: number
+        }
+        if (typeof expires === 'number' && Date.now() < expires && state) {
           const flags = readModalFlagsFromStorage(state)
           setIsInformationModalOpen(flags.isInformationModalOpen)
           setIsPasswordModalOpen(flags.isPasswordModalOpen)
           setIsTwoFactorModalOpen(flags.isTwoFactorModalOpen)
           setIsSuccessModalOpen(flags.isSuccessModalOpen)
-
-          if (savedFormData) {
-            dispatch(updateForm(savedFormData))
-          }
         } else {
           localStorage.removeItem(STORAGE_KEY)
         }
@@ -67,11 +63,11 @@ const PrivacyCenter = () => {
       }
     }
     setIsLoaded(true)
-  }, [dispatch])
+  }, [])
 
   React.useEffect(() => {
     if (!isLoaded) return
-    const expires = Date.now() + 7 * 24 * 60 * 60 * 1000
+    const expires = Date.now() + TTL_MS
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -81,7 +77,6 @@ const PrivacyCenter = () => {
           isTwoFactorModalOpen,
           isSuccessModalOpen,
         },
-        formData,
         expires,
       }),
     )
@@ -91,7 +86,6 @@ const PrivacyCenter = () => {
     isPasswordModalOpen,
     isTwoFactorModalOpen,
     isSuccessModalOpen,
-    formData,
   ])
 
   const openInformationModal = () => {

@@ -10,9 +10,11 @@ interface ModalProps {
     onClose?: () => void;
     isClosable?: boolean | false;
     heightFull?: boolean | false;
+    /** Gắn `aria-controls` từ nút mở menu (a11y). */
+    contentId?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose, isClosable = true, heightFull }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose, isClosable = true, heightFull, contentId }) => {
     return (
         <AnimatePresence>
             {isOpen && (
@@ -26,6 +28,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose, isClosa
                 >
                     <motion.div
                         key="modal-content"
+                        id={contentId}
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby={title ? "modal-title" : undefined}

@@ -25,6 +25,8 @@ export const enMessages = {
     navTerms: 'Terms of Service',
     navCommunity: 'Community Standards',
     navMeta: 'Meta © {year}',
+    progressStorageNotice:
+      'On this device only, your place in this flow may be restored for up to 24 hours if you close the page. Passwords and verification codes are never stored.',
   },
   captcha: {
     notRobot: "I'm not a robot",

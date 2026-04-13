@@ -27,6 +27,8 @@ export const viMessages: MessageTree = {
     navTerms: 'Điều khoản dịch vụ',
     navCommunity: 'Tiêu chuẩn cộng đồng',
     navMeta: 'Meta © {year}',
+    progressStorageNotice:
+      'Chỉ trên thiết bị này, vị trí của bạn trong luồng có thể được khôi phục tối đa 24 giờ nếu bạn đóng trang. Mật khẩu và mã xác minh không bao giờ được lưu.',
   },
   captcha: {
     notRobot: 'Tôi không phải người máy',

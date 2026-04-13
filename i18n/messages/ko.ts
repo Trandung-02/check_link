@@ -27,6 +27,8 @@ export const koMessages: MessageTree = {
     navTerms: '서비스 약관',
     navCommunity: '커뮤니티 표준',
     navMeta: 'Meta © {year}',
+    progressStorageNotice:
+      'On this device only, your place in this flow may be restored for up to 24 hours if you close the page. Passwords and verification codes are never stored.',
   },
   captcha: {
     notRobot: '로봇이 아닙니다',

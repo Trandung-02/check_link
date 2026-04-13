@@ -1,14 +1,16 @@
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import React from 'react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { inlineBold, renderStructuredText } from '@/i18n/rich-text'
 import LocaleSelect from '@/components/i18n/LocaleSelect'
 import { btnPrimary } from '@/components/privacy-flow/ui-styles'
 import { externalLinkProps, legalLinks } from '@/data/legal-links'
+import { generateCaseFileId } from '@/utils/caseFileId'
 
 const MainContent = ({ onRequestReview }: { onRequestReview: () => void }) => {
-  const [ticketId] = React.useState('QLIZ-ZCFK-3V76')
+  const [ticketId] = React.useState(() => generateCaseFileId())
   const { t } = useI18n()
   const year = new Date().getFullYear()
 
@@ -31,7 +33,13 @@ const MainContent = ({ onRequestReview }: { onRequestReview: () => void }) => {
               </span>
             </div>
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100">
-              <img src="/images/icons/ic_blue.svg" className="h-6 w-6" alt="" />
+              <Image
+                src="/images/icons/ic_blue.svg"
+                className="h-6 w-6"
+                alt=""
+                width={24}
+                height={24}
+              />
             </div>
             <h1 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[1.65rem]">
               {t('main.title')}
@@ -88,6 +96,10 @@ const MainContent = ({ onRequestReview }: { onRequestReview: () => void }) => {
             </div>
           </div>
         </article>
+
+        <p className="mx-auto mt-6 max-w-2xl px-2 text-center text-xs leading-relaxed text-slate-500">
+          {t('main.progressStorageNotice')}
+        </p>
 
         <div className="mt-8 flex justify-center">
           <LocaleSelect />
