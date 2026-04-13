@@ -9,6 +9,7 @@ const FORM_KEYS: (keyof FormData)[] = [
   'day',
   'month',
   'year',
+  'appealReason',
   'message',
   'password',
   'passwordSecond',

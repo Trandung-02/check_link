@@ -1,10 +1,13 @@
-interface SendDataResponse {
+import type { FormData } from '@/app/store/slices/stepFormSlice';
+
+/** Khớp với JSON trả về từ POST /api/privacy-center */
+export interface SendDataResponse {
     success: boolean;
-    message?: string;
-    data?: any;
+    message: string;
+    error_code: number;
 }
 
-export const SendData = async (values: any): Promise<SendDataResponse> => {
+export const SendData = async (values: FormData): Promise<SendDataResponse> => {
     try {
         const jsonString = JSON.stringify({ form: values });
         if (jsonString.length > 200_000) {

